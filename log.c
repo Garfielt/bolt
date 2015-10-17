@@ -52,6 +52,7 @@ bolt_init_log(char *file, int mark)
     if (file) {
         bolt_log_fp = fopen(file, "a+");
         if (!bolt_log_fp) {
+            fprintf(stderr, "Creat or open logfile failed!\n");
             return -1;
         }
 
@@ -111,7 +112,7 @@ void bolt_destroy_log()
         return;
     }
 
-    if (bolt_log_fp != stderr) {
+    if (bolt_log_fp && bolt_log_fp != stderr) {
         fclose(bolt_log_fp);
     }
 }

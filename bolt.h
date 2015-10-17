@@ -10,6 +10,7 @@
 #include "log.h"
 
 
+
 #define  BOLT_MIN_CACHE_SIZE   (1024 * 1024 * 10)    /* 10MB */
 #define  BOLT_FILENAME_LENGTH  1024
 #define  BOLT_RBUF_SIZE        2048
@@ -35,7 +36,10 @@
 
 #define  BOLT_DATETIME_LENGTH  sizeof("Mon, 28 Sep 1970 06:00:00 GMT")
 
+#define  BOLT  "Bolt"
 #define  BOLT_VERSION  "V0.2"
+#define  BOLT_SERVER  BOLT "/0.2"
+
 
 
 typedef struct {

@@ -65,7 +65,7 @@ char bolt_error_400_page[] =
 "<head><title>400 Bad Request</title></head>"
 "<body bgcolor=\"white\">"
 "<center><h1>400 Bad Request</h1></center>"
-"<hr><div align=\"center\">Bolt " BOLT_VERSION "</div>"
+"<hr><div align=\"center\">" BOLT " " BOLT_VERSION "</div>"
 "</body>"
 "</html>";
 
@@ -74,7 +74,7 @@ char bolt_error_404_page[] =
 "<head><title>404 Not Found</title></head>"
 "<body bgcolor=\"white\">"
 "<center><h1>404 Not Found</h1></center>"
-"<hr><div align=\"center\">Bolt " BOLT_VERSION "</div>"
+"<hr><div align=\"center\">" BOLT " " BOLT_VERSION "</div>"
 "</body>"
 "</html>";
 
@@ -83,7 +83,7 @@ char bolt_error_500_page[] =
 "<head><title>500 Internal Server Error</title></head>"
 "<body bgcolor=\"white\">"
 "<center><h1>500 Internal Server Error</h1></center>"
-"<hr><div align=\"center\">Bolt " BOLT_VERSION "</div>"
+"<hr><div align=\"center\">" BOLT " " BOLT_VERSION "</div>"
 "</body>"
 "</html>";
 
@@ -444,15 +444,17 @@ bolt_connection_begin_send(bolt_connection_t *c)
                          "Content-Type: image/jpeg\r\n"
                          "Content-Length: %d\r\n"
                          "Last-Modified: %s\r\n"
-                         "Server: Bolt\r\n\r\n",
+                         "Server: %s\r\n\r\n",
                          c->icache->size,
-                         c->icache->datetime);
+                         c->icache->datetime,
+                         BOLT_SERVER);
         break;
 
     case 304:
         nsend = snprintf(c->wbuf, BOLT_WBUF_SIZE,
                          "HTTP/1.1 304 Not Modified\r\n"
-                         "Server: Bolt\r\n\r\n");
+                         "Server: %s\r\n\r\n",
+                         BOLT_SERVER);
         break;
 
     case 400:
@@ -460,8 +462,9 @@ bolt_connection_begin_send(bolt_connection_t *c)
                          "HTTP/1.1 400 Bad Request\r\n"
                          "Content-Type: text/html\r\n"
                          "Content-Length: %d\r\n"
-                         "Server: Bolt\r\n\r\n",
-                         sizeof(bolt_error_400_page) - 1);
+                         "Server: %s\r\n\r\n",
+                         sizeof(bolt_error_400_page) - 1,
+                         BOLT_SERVER);
         break;
 
     case 404:
@@ -469,8 +472,9 @@ bolt_connection_begin_send(bolt_connection_t *c)
                          "HTTP/1.1 404 Not Found\r\n"
                          "Content-Type: text/html\r\n"
                          "Content-Length: %d\r\n"
-                         "Server: Bolt\r\n\r\n",
-                         sizeof(bolt_error_404_page) - 1);
+                         "Server: %s\r\n\r\n",
+                         sizeof(bolt_error_404_page) - 1,
+                         BOLT_SERVER);
         break;
 
     case 500:
@@ -479,8 +483,9 @@ bolt_connection_begin_send(bolt_connection_t *c)
                          "HTTP/1.1 500 Internal Server Error\r\n"
                          "Content-Type: text/html\r\n"
                          "Content-Length: %d\r\n"
-                         "Server: Bolt\r\n\r\n",
-                         sizeof(bolt_error_500_page) - 1);
+                         "Server: %s\r\n\r\n",
+                         sizeof(bolt_error_500_page) - 1,
+                         BOLT_SERVER);
         break;
     }
 
@@ -578,6 +583,7 @@ bolt_connection_http_parse_url(struct http_parser *p,
 {
     bolt_connection_t *c = p->data;
     char *start, *end;
+    char *pos;
 
     if (len > BOLT_FILENAME_LENGTH) {
         c->parse_error = 1;
@@ -597,6 +603,7 @@ bolt_connection_http_parse_url(struct http_parser *p,
 
     memcpy(c->filename, "/", 1);
     memcpy(c->filename + 1, start, len);
+    memcpy(c->filename + len + 1, "\0", 1);
 
     c->fnlen = len + 1;
 

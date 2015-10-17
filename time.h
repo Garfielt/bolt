@@ -1,3 +1,6 @@
+#include <time.h>
+
+
 #ifndef __BOLT_TIME_H
 #define __BOLT_TIME_H
 

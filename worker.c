@@ -67,14 +67,23 @@ bolt_worker_parse_task(bolt_task_t *task)
     bolt_compress_t *work;
     char *path;
     int plen;
+    char *query_offset;
+
+    if (strstr(start, "..")){
+        return NULL;
+    }
 
     for (; offset >= start; offset--) {
         ch = *offset;
+        if(ch == '?') {
+            end = offset - 1;
+        }
 
         switch (state) {
         case BOLT_PT_GET_EXT:
             if (ch == '.')
                 state = BOLT_PT_GET_QUALITY;
+                query_offset = offset;
             break;
         case BOLT_PT_GET_QUALITY:
             if (ch == '_')
@@ -95,12 +104,31 @@ bolt_worker_parse_task(bolt_task_t *task)
         }
     }
 
+    if (state == BOLT_PT_GET_QUALITY && query_offset > start) {
+        work = malloc(sizeof(*work));
+        if (work == NULL) {
+            return NULL;
+        }
+        work->width = 0;
+        work->height = 0;
+        work->quality = 80;
+
+        path = setting->path;
+        plen = setting->path_len;
+        fnlen = end - start + 1;
+        
+        last = 0;  memcpy(work->path + last, path, plen);
+        last += plen;  memcpy(work->path + last, task->filename, fnlen);
+        last += fnlen;  memcpy(work->path + last, "\0", 1);
+        return work;
+    }
+
     fnlen = offset - start;
 
     if (state != BOLT_PT_GET_FOUND || fnlen <= 0) {
         return NULL;
     }
-
+    
     pos = 0;
     state = BOLT_PT_GET_WIDTH;
 
@@ -141,7 +169,7 @@ bolt_worker_parse_task(bolt_task_t *task)
 
         buffer[pos++] = ch;
     }
-
+	
     if (state != BOLT_PT_GET_EXT
         || pos <= 0
         || width == 0
@@ -243,7 +271,7 @@ bolt_worker_compress(char *path, int quality,
         goto failed;
     }
 
-    if ((blob = MagickWriteImageBlob(wand, length)) == NULL) {
+    if ((blob = MagickGetImageBlob(wand, length)) == NULL) {
         goto failed;
     }
 

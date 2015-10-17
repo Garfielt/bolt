@@ -312,6 +312,16 @@ void bolt_parse_options(int argc, char *argv[])
     }
 }
 
+/*
+static void bolt_sighandler(int signal, siginfo_t *siginfo, void *arg)
+{
+    bolt_log(BOLT_LOG_NOTICE, "Signal Terminal received");
+    bolt_destroy_log();
+    fprintf(stderr, "\nbye bye!\n");
+}
+*/
+
+
 
 int main(int argc, char *argv[])
 {
@@ -337,22 +347,39 @@ int main(int argc, char *argv[])
     }
 
     sigemptyset(&signal_mask);
+    /*
+    struct sigaction siginfo = {
+        .sa_sigaction = &bolt_sighandler,
+        .sa_mask = signal_mask,
+        .sa_flags = SA_RESTART,
+    };
+
+    sigaction(SIGINT, &siginfo, NULL);
+    sigaction(SIGTERM, &siginfo, NULL);
+    sigaction(SIGPIPE, &siginfo, NULL);
+    */
     sigaddset(&signal_mask, SIGPIPE);
-
     pthread_sigmask(SIG_BLOCK, &signal_mask, NULL);
-
+    
     if (bolt_init_log(setting->logfile, setting->logmark) == -1
         || bolt_init_service() == -1
         || bolt_init_connections() == -1
         || bolt_init_workers(setting->workers) == -1)
     {
+        fprintf(stderr, "Fatal: Init error, please check logfile\n");
         exit(1);
     }
 
     bolt_clock_handler(0, 0, 0);
     event_base_dispatch(service->ebase); /* RUNNING */
 
+    struct timeval tv = { .tv_usec = 0, .tv_sec = 1 }; /* 1 s */
+    event_base_loopexit(service->ebase, &tv);
+    event_base_free(service->ebase);
     bolt_destroy_log();
+    close(service->sock);
+    jk_hash_free(service->cache_htb);
+    jk_hash_free(service->waiting_htb);
 
     exit(0);
 }
