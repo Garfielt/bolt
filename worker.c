@@ -104,7 +104,7 @@ bolt_worker_parse_task(bolt_task_t *task)
         }
     }
 
-    if (state == BOLT_PT_GET_QUALITY && query_offset > start) {
+    if (state != BOLT_PT_GET_FOUND && state > BOLT_PT_GET_QUALITY && query_offset > start) {
         work = malloc(sizeof(*work));
         if (work == NULL) {
             return NULL;
@@ -523,4 +523,3 @@ bolt_init_workers(int num)
 
     return 0;
 }
-
